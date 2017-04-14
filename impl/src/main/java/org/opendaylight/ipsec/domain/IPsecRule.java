@@ -20,6 +20,9 @@ public class IPsecRule {
     private int action;
     private String connectionName;
 
+    private String mSource;
+    private String mDestination;
+
     /**
      * construct an IPsec rule
      * @param source source ip address
@@ -38,6 +41,9 @@ public class IPsecRule {
         this.dstPrefixLen = destinationPrefixLength;
         this.action = action;
         this.connectionName = connectionName;
+
+        this.mSource = modifyIP(this.getSource(), this.srcPrefixLen);
+        this.mDestination = modifyIP(this.getDestination(), this.dstPrefixLen);
     }
 
     public String getSource() {
@@ -94,6 +100,22 @@ public class IPsecRule {
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
+    }
+
+    public String getmSource() {
+        return mSource;
+    }
+
+    public void setmSource(String mSource) {
+        this.mSource = mSource;
+    }
+
+    public String getmDestination() {
+        return mDestination;
+    }
+
+    public void setmDestination(String mDestination) {
+        this.mDestination = mDestination;
     }
 
     /**
@@ -167,5 +189,28 @@ public class IPsecRule {
                 ", action=" + action +
                 ", connectionName='" + connectionName + '\'' +
                 '}';
+    }
+
+    String modifyIP(String ip, byte prefixLen) {
+        String [] ips = ip.split("\\.");            /// use REGEX to split, not regular string
+        switch (prefixLen) {
+            case 0 :
+                ip = "*" + "." + "*" + "." + "*" + "." + "*";
+                break;
+            case 8 :
+                ip = ips[0] + "." + "*" + "." + "*" + "." + "*";
+                break;
+            case 16 :
+                ip = ips[0] + "." + ips[1] + "." + "*" + "." + "*";
+                break;
+            case 24 :
+                ip = ips[0] + "." + ips[1] + "." + ips[2] + "." + "*";
+                break;
+            case 32 :
+                ip = ips[0] + "." + ips[1] + "." + ips[2] + "." + ips[3];
+                break;
+            default :
+        }
+        return ip;
     }
 }

@@ -23,6 +23,101 @@ public class IPsecRuleBuffer {
     private static List<IPsecRule> rules = new Vector<>();
 
     /**
+     * compare IP
+     * @param ipA
+     * @param ipB
+     * @return = or > or < or !=
+     */
+    static String compareIP(String ipA, String ipB) {
+        if(ipA.equals(ipB)) {
+            return Constant.COMP_EQUAL;
+        }
+        String [] ipsA = ipA.split("\\.");      //  IMPORTANT: REGEX, not normal string
+        String [] ipsB = ipB.split("\\.");
+        for(int i = 0; i < 4; ++i) {
+            if(ipsA[i].equals("*")) {
+                return Constant.COMP_BIGGER;
+            } else if(ipsB[i].equals("*")) {
+                return Constant.COMP_LESS;
+            } else if(ipsA[i].equals(ipsB[i])) {
+                continue;
+            } else {
+                return Constant.COMP_NOTEQUAL;
+            }
+        }
+        return Constant.COMP_EQUAL;                 // useless
+    }
+
+    /**
+     * the result of comparision in srcIP & desIP
+     * @param srcIPComp
+     * @param desIPComp
+     * @return >= or <= or !=
+     */
+    static String ipComps(String srcIPComp, String desIPComp) {
+        if((srcIPComp.equals(Constant.COMP_BIGGER) && desIPComp.equals(Constant.COMP_BIGGER))
+                || (srcIPComp.equals(Constant.COMP_EQUAL) && desIPComp.equals(Constant.COMP_EQUAL))
+                || (srcIPComp.equals(Constant.COMP_BIGGER) && desIPComp.equals(Constant.COMP_EQUAL))
+                || (srcIPComp.equals(Constant.COMP_EQUAL) && desIPComp.equals(Constant.COMP_BIGGER))
+                ) {
+            return Constant.COMP_BE;
+        }
+        if(((srcIPComp.equals(Constant.COMP_LESS) && desIPComp.equals(Constant.COMP_LESS)))
+                || (srcIPComp.equals(Constant.COMP_EQUAL) && desIPComp.equals(Constant.COMP_LESS))
+                || (srcIPComp.equals(Constant.COMP_LESS) && desIPComp.equals(Constant.COMP_EQUAL))
+                ) {
+            return Constant.COMP_LE;
+        }
+        return Constant.COMP_NOTEQUAL;
+    }
+
+    /**
+     * check list. if policies need to be deleted, mark in valid[] and deal it at last.
+     * @param iPsecRule
+     */
+    static boolean checkToAdd(IPsecRule iPsecRule) {
+
+        IPsecRule curPolicy = iPsecRule;
+        Iterator<IPsecRule> it = rules.iterator();
+        while (it.hasNext()) {
+            IPsecRule prePolicy = it.next();
+
+            // Use modified IP to compare
+            String preSrcIP = prePolicy.getmSource();
+            String curSrcIP = curPolicy.getmSource();
+            String preDesIP = prePolicy.getmDestination();
+            String curDesIP = curPolicy.getmDestination();
+            // -1: discard, -2: forward without process, 0: protect with IPsec
+            int preAction = prePolicy.getAction();
+            int curAction = curPolicy.getAction();
+            String srcIPComp = compareIP(preSrcIP, curSrcIP);
+            String desIPComp = compareIP(preDesIP, curDesIP);
+
+            String ipComp = ipComps(srcIPComp, desIPComp);      //result of comparision in srcIP & desIP
+
+            if(ipComp.equals(Constant.COMP_BE)) {               // Shadow
+                // TODO: remember this infos, and alert on the web page together later
+                System.out.println("SHADOW policy: " + curPolicy.toString() + " by " +
+                        prePolicy.toString());
+                return true;
+            } else if(ipComp.equals(Constant.COMP_LE)) {
+                if(preAction != curAction) {               // Redundant
+                    System.out.println("REDUNDANT policy: " + prePolicy.toString() + " with "
+                            + curPolicy.toString());
+                    System.out.println("Delete former policy: " + prePolicy.toString());
+                    it.remove();
+                } else {                                        // Special case
+                    System.out.println("SPECIAL_CASE policy: " + prePolicy.toString() + " of "
+                            + curPolicy.toString());
+                }
+            }
+        }
+
+        // not conflict
+        return false;
+    }
+
+    /**
      * test whether an added rule will cause conflict
      * @param rule rule to be added
      * @return result
@@ -96,7 +191,8 @@ public class IPsecRuleBuffer {
     }
 
     public static void add(IPsecRule rule) throws RuleConflictException {
-        if (isConflict(rule)) {
+//        if (isConflict(rule)) {
+        if (checkToAdd(rule)) {
             throw new RuleConflictException("conflict");
         }
         checkAllGateways(rule);
