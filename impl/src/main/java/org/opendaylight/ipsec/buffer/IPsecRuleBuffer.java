@@ -72,10 +72,12 @@ public class IPsecRuleBuffer {
     }
 
     /**
-     * check list. if policies need to be deleted, mark in valid[] and deal it at last.
+     * before add to the list, check conflict first.
      * @param iPsecRule
      */
     static boolean checkToAdd(IPsecRule iPsecRule) {
+
+        System.out.println("*** Check to add. ***");
 
         IPsecRule curPolicy = iPsecRule;
         Iterator<IPsecRule> it = rules.iterator();
@@ -97,24 +99,92 @@ public class IPsecRuleBuffer {
 
             if(ipComp.equals(Constant.COMP_BE)) {               // Shadow
                 // TODO: remember this infos, and alert on the web page together later
-                System.out.println("SHADOW policy: " + curPolicy.toString() + " by " +
+                System.out.println("===> SHADOW policy: " + curPolicy.toString() + " by " +
                         prePolicy.toString());
+                System.out.println("  => Don't add!");
                 return true;
             } else if(ipComp.equals(Constant.COMP_LE)) {
-                if(preAction != curAction) {               // Redundant
-                    System.out.println("REDUNDANT policy: " + prePolicy.toString() + " with "
+                if(preAction == curAction) {               // Redundant
+                    System.out.println("===> REDUNDANT policy: " + prePolicy.toString() + " with "
                             + curPolicy.toString());
-                    System.out.println("Delete former policy: " + prePolicy.toString());
+                    System.out.println("  => Delete former policy: " + prePolicy.toString());
                     it.remove();
                 } else {                                        // Special case
-                    System.out.println("SPECIAL_CASE policy: " + prePolicy.toString() + " of "
+                    System.out.println("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
                             + curPolicy.toString());
                 }
             }
         }
 
         // not conflict
+        System.out.println("===> No conflicts found. Add policy " + curPolicy.toString());
         return false;
+    }
+
+    /**
+     * check list. if policies need to be deleted, mark in valid[] and deal it at last.
+     */
+    static void checkList() {
+
+        System.out.println("*** Check lists. ***");
+
+        // validity to mark
+        int len = rules.size();
+        boolean [] valid = new boolean[len];
+        for(int i=0; i < len; i++) {
+            valid[i] = true;
+        }
+
+        for (int i = 0; i < rules.size(); ++i) {
+            if(!valid[i]) {                                         // check validity
+                continue;
+            }
+            IPsecRule curPolicy = rules.get(i);
+            for(int j = 0; j < i; ++j) {
+                if(!valid[j]) {                                     // check validity
+                    continue;
+                }
+                IPsecRule prePolicy = rules.get(j);
+                String preSrcIP = prePolicy.getmSource();
+                String curSrcIP = curPolicy.getmSource();
+                String preDesIP = prePolicy.getmDestination();
+                String curDesIP = curPolicy.getmDestination();
+                int preAction = prePolicy.getAction();
+                int curAction = curPolicy.getAction();
+                String srcIPComp = compareIP(preSrcIP, curSrcIP);
+                String desIPComp = compareIP(preDesIP, curDesIP);
+
+                String ipComp = ipComps(srcIPComp, desIPComp);      //result of comparision in srcIP & desIP
+
+                if(ipComp.equals(Constant.COMP_BE)) {               // Shadow
+                    System.out.println("===> SHADOW policy: " + curPolicy.toString() + " by " +
+                            prePolicy.toString());
+                    System.out.println("  => Delete latter policy: " + curPolicy.toString());
+                    valid[i] = false;
+                    break;
+                } else if(ipComp.equals(Constant.COMP_LE)) {
+                    if(preAction == curAction) {               // Redundant
+                        System.out.println("===> REDUNDANT policy: " + prePolicy.toString() + " with "
+                                + curPolicy.toString());
+                        System.out.println("  => Delete former policy: " + prePolicy.toString());
+                        valid[j] = false;
+                    } else {                                        // Special case
+                        System.out.println("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
+                                + curPolicy.toString());
+                    }
+                }
+            }
+        }
+
+        // delete at last according to the validity
+        Iterator<IPsecRule> it = rules.iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            it.next();
+            if(!valid[i++]) {
+                it.remove();
+            }
+        }
     }
 
     /**
@@ -202,12 +272,10 @@ public class IPsecRuleBuffer {
     }
 
     public static void add(int pos, IPsecRule rule) throws RuleConflictException {
-        if (isConflict(rule)) {
-            throw new RuleConflictException("conflict");
-        }
         checkAllGateways(rule);
 //        System.out.println("rule at " + String.valueOf(pos) + ": " + rule.toString());
         rules.add(pos, rule);
+        checkList();
     }
 
     public static void remove(int pos) {
