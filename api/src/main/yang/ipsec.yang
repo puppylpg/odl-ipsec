@@ -151,6 +151,16 @@ module IPsec {
         }
     }
 
+    rpc aclInfo {
+        input {
+        }
+        output {
+            leaf result {
+                type string;
+            }
+        }
+    }
+
     rpc rule-del {
         input {
             leaf position {

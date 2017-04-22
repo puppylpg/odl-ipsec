@@ -28,10 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Future;
 
 public class IPsecImpl implements IPsecService {
@@ -117,13 +114,30 @@ public class IPsecImpl implements IPsecService {
     public Future<RpcResult<RuleAllOutput>> ruleAll(RuleAllInput input) {
 
         List<IPsecRule> rules = IPsecRuleBuffer.listAll();
+
         JSONArray jsonRules = new JSONArray();
         for (IPsecRule ir : rules) {
             jsonRules.put(new JSONObject(ir));
         }
 
+        boolean [] valid = IPsecRuleBuffer.listValid();
+        JSONArray jsonValid = new JSONArray();
+        for (Boolean b : valid) {
+            if(b) {
+                jsonValid.put("TRUE");
+            } else {
+                jsonValid.put("FALSE");
+            }
+        }
+
+        // rules & valids
+        HashMap<String, String> jsonMap = new HashMap<>();
+        jsonMap.put("RULES", jsonRules.toString());
+        jsonMap.put("VALIDS", jsonValid.toString());
+
         RuleAllOutputBuilder builder = new RuleAllOutputBuilder();
-        builder.setResult(jsonRules.toString());
+//        builder.setResult(jsonRules.toString());
+        builder.setResult(jsonMap.toString());
         RpcResult<RuleAllOutput> rpcResult =
                 Rpcs.<RuleAllOutput>getRpcResult(true, builder.build(), Collections.<RpcError>emptySet());
         return Futures.immediateFuture(rpcResult);

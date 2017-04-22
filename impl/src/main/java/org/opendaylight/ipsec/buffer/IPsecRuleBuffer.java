@@ -21,6 +21,8 @@ import java.util.Iterator;
 
 public class IPsecRuleBuffer {
     private static List<IPsecRule> rules = new Vector<>();
+    // to mark whether the rules are valid
+    private static boolean [] valid;
 
     /**
      * compare IP
@@ -130,7 +132,7 @@ public class IPsecRuleBuffer {
 
         // validity to mark
         int len = rules.size();
-        boolean [] valid = new boolean[len];
+        valid = new boolean[len];
         for(int i=0; i < len; i++) {
             valid[i] = true;
         }
@@ -176,15 +178,15 @@ public class IPsecRuleBuffer {
             }
         }
 
-        // delete at last according to the validity
-        Iterator<IPsecRule> it = rules.iterator();
-        int i = 0;
-        while (it.hasNext()) {
-            it.next();
-            if(!valid[i++]) {
-                it.remove();
-            }
-        }
+//        // delete at last according to the validity
+//        Iterator<IPsecRule> it = rules.iterator();
+//        int i = 0;
+//        while (it.hasNext()) {
+//            it.next();
+//            if(!valid[i++]) {
+//                it.remove();
+//            }
+//        }
     }
 
     /**
@@ -262,13 +264,14 @@ public class IPsecRuleBuffer {
 
     public static void add(IPsecRule rule) throws RuleConflictException {
 //        if (isConflict(rule)) {
-        if (checkToAdd(rule)) {
-            throw new RuleConflictException("conflict");
-        }
+//        if (checkToAdd(rule)) {
+//            throw new RuleConflictException("conflict");
+//        }
         checkAllGateways(rule);
         int pos = rules.size();
 //        System.out.println("rule at " + String.valueOf(pos) + ": " + rule.toString());
         rules.add(rule);
+        checkList();
     }
 
     public static void add(int pos, IPsecRule rule) throws RuleConflictException {
@@ -293,6 +296,10 @@ public class IPsecRuleBuffer {
 
     public static List<IPsecRule> listAll() {
         return rules;
+    }
+
+    public static boolean [] listValid() {
+        return valid;
     }
 
     /**
