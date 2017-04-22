@@ -297,7 +297,8 @@ public class IPsecRuleBuffer {
      */
     public static void remove(int pos) {
         rules.remove(pos);
-        removeValidList(pos);
+        //JUST re-checkList is OK!!!
+        checkList();
     }
 
     /**
