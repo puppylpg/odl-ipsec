@@ -181,14 +181,25 @@ public class IPsecRule {
 
     @Override
     public String toString() {
-        return "IPsecRule{" +
-                "source=" + source +
-                ", srcPrefixLen=" + srcPrefixLen +
-                ", destination=" + destination +
-                ", dstPrefixLen=" + dstPrefixLen +
-                ", action=" + action +
-                ", connectionName='" + connectionName + '\'' +
+        return "{" +
+                getSource() + "/" +
+                srcPrefixLen +
+                ", " +
+                getDestination() + "/" +
+                dstPrefixLen +
+                ", " + getRealAction(action) +
+                ", connName='" + connectionName + '\'' +
                 '}';
+    }
+
+    String getRealAction(int action) {
+        if (action == -1) {
+            return "DISCARD";
+        } else if (action == -2) {
+            return "BYPASS";
+        } else {
+            return "PROTECT";
+        }
     }
 
     String modifyIP(String ip, byte prefixLen) {

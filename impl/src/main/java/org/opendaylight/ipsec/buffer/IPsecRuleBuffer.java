@@ -15,6 +15,7 @@ import org.opendaylight.ipsec.utils.RuleConflictException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.Iterator;
@@ -167,7 +168,6 @@ public class IPsecRuleBuffer {
                     sb.append("===> SHADOW policy: " + curPolicy.toString() + " by " +
                             prePolicy.toString() + "\n");
                     System.out.println("  => Delete latter policy: " + curPolicy.toString());
-                    sb.append("  => Delete latter policy: " + curPolicy.toString() + "\n");
                     valid[i] = false;
                     break;
                 } else if(ipComp.equals(Constant.COMP_LE)) {
@@ -177,7 +177,6 @@ public class IPsecRuleBuffer {
                         sb.append("===> REDUNDANT policy: " + prePolicy.toString() + " with "
                                 + curPolicy.toString() + "\n");
                         System.out.println("  => Delete former policy: " + prePolicy.toString());
-                        sb.append("  => Delete former policy: " + prePolicy.toString() + "\n");
                         valid[j] = false;
                     } else {                                        // Special case
                         System.out.println("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
@@ -292,8 +291,28 @@ public class IPsecRuleBuffer {
         checkList();
     }
 
+    /**
+     * delete corresponding valids when deleting rules
+     * @param pos
+     */
     public static void remove(int pos) {
         rules.remove(pos);
+        removeValidList(pos);
+    }
+
+    /**
+     * delete element of array(valid)
+     * @param pos
+     */
+    public static void removeValidList(int pos) {
+        int len = valid.length;
+        for(int i = 0; i < len; ++i) {
+            if(i >= pos && i < len - 1) {
+                valid[i] = valid[i+1];
+            }
+        }
+        // delete the last one of the array. -1
+        valid = Arrays.copyOf(valid, valid.length-1);
     }
 
     public static void update(int pos, IPsecRule rule) {
