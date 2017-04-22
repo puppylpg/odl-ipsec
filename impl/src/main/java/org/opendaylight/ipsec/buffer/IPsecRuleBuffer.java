@@ -23,6 +23,7 @@ public class IPsecRuleBuffer {
     private static List<IPsecRule> rules = new Vector<>();
     // to mark whether the rules are valid
     private static boolean [] valid;
+    private static StringBuilder sb;
 
     /**
      * compare IP
@@ -128,6 +129,8 @@ public class IPsecRuleBuffer {
      */
     static void checkList() {
 
+        sb = new StringBuilder();
+
         System.out.println("*** Check lists. ***");
 
         // validity to mark
@@ -161,18 +164,26 @@ public class IPsecRuleBuffer {
                 if(ipComp.equals(Constant.COMP_BE)) {               // Shadow
                     System.out.println("===> SHADOW policy: " + curPolicy.toString() + " by " +
                             prePolicy.toString());
+                    sb.append("===> SHADOW policy: " + curPolicy.toString() + " by " +
+                            prePolicy.toString() + "\n");
                     System.out.println("  => Delete latter policy: " + curPolicy.toString());
+                    sb.append("  => Delete latter policy: " + curPolicy.toString() + "\n");
                     valid[i] = false;
                     break;
                 } else if(ipComp.equals(Constant.COMP_LE)) {
                     if(preAction == curAction) {               // Redundant
                         System.out.println("===> REDUNDANT policy: " + prePolicy.toString() + " with "
                                 + curPolicy.toString());
+                        sb.append("===> REDUNDANT policy: " + prePolicy.toString() + " with "
+                                + curPolicy.toString() + "\n");
                         System.out.println("  => Delete former policy: " + prePolicy.toString());
+                        sb.append("  => Delete former policy: " + prePolicy.toString() + "\n");
                         valid[j] = false;
                     } else {                                        // Special case
                         System.out.println("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
                                 + curPolicy.toString());
+                        sb.append("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
+                                + curPolicy.toString() + "\n");
                     }
                 }
             }
@@ -300,6 +311,10 @@ public class IPsecRuleBuffer {
 
     public static boolean [] listValid() {
         return valid;
+    }
+
+    public static String getSb() {
+        return sb.toString();
     }
 
     /**

@@ -135,13 +135,27 @@ public class IPsecImpl implements IPsecService {
         jsonMap.put("RULES", jsonRules.toString());
         jsonMap.put("VALIDS", jsonValid.toString());
 
+        JSONObject jb = new JSONObject(jsonMap);
+
         RuleAllOutputBuilder builder = new RuleAllOutputBuilder();
 //        builder.setResult(jsonRules.toString());
-        builder.setResult(jsonMap.toString());
+        builder.setResult(jb.toString());
         RpcResult<RuleAllOutput> rpcResult =
                 Rpcs.<RuleAllOutput>getRpcResult(true, builder.build(), Collections.<RpcError>emptySet());
         return Futures.immediateFuture(rpcResult);
 
+    }
+
+    @Override
+    public Future<RpcResult<AclInfoOutput>> aclInfo(AclInfoInput input) {
+        AclInfoOutputBuilder builder = new AclInfoOutputBuilder();
+
+        String aclInfo = IPsecRuleBuffer.getSb();
+
+        builder.setResult(aclInfo);
+        RpcResult<AclInfoOutput> rpcResult =
+                Rpcs.<AclInfoOutput>getRpcResult(true, builder.build(), Collections.<RpcError>emptySet());
+        return Futures.immediateFuture(rpcResult);
     }
 
     @Override
