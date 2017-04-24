@@ -1,0 +1,9 @@
+    
+    feature:install odl-mdsal-clustering
+    feature:install odl-restconf
+    feature:install odl-dlux-all
+    
+    feature:repo-add mvn:org.opendaylight.ipsec/ipsec-features/1.0.0-SNAPSHOT/xml/features
+    
+    feature:install odl-ipsec
+    

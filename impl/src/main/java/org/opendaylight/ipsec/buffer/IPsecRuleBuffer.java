@@ -165,8 +165,8 @@ public class IPsecRuleBuffer {
                 if(ipComp.equals(Constant.COMP_BE)) {               // Shadow
                     System.out.println("===> SHADOW policy: " + curPolicy.toString() + " by " +
                             prePolicy.toString());
-                    sb.append("===> SHADOW policy: " + curPolicy.toString() + " by " +
-                            prePolicy.toString() + "\n");
+                    sb.append("策略屏蔽: " + curPolicy.toString() + "被" +
+                            prePolicy.toString() + "屏蔽.\n");
                     System.out.println("  => Delete latter policy: " + curPolicy.toString());
                     valid[i] = false;
                     break;
@@ -174,15 +174,15 @@ public class IPsecRuleBuffer {
                     if(preAction == curAction) {               // Redundant
                         System.out.println("===> REDUNDANT policy: " + prePolicy.toString() + " with "
                                 + curPolicy.toString());
-                        sb.append("===> REDUNDANT policy: " + prePolicy.toString() + " with "
-                                + curPolicy.toString() + "\n");
+                        sb.append("冗余策略: " + prePolicy.toString() + "是"
+                                + curPolicy.toString() + "的冗余.\n");
                         System.out.println("  => Delete former policy: " + prePolicy.toString());
                         valid[j] = false;
                     } else {                                        // Special case
                         System.out.println("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
                                 + curPolicy.toString());
-                        sb.append("===> SPECIAL_CASE policy: " + prePolicy.toString() + " of "
-                                + curPolicy.toString() + "\n");
+                        sb.append("特例: " + prePolicy.toString() + "是"
+                                + curPolicy.toString() + "的特例.\n");
                     }
                 }
             }
