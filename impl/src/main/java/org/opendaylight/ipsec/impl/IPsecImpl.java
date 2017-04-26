@@ -18,8 +18,9 @@ import org.opendaylight.ipsec.buffer.IPsecRuleBuffer;
 import org.opendaylight.ipsec.domain.IPsecConnection;
 import org.opendaylight.ipsec.domain.IPsecGateway;
 import org.opendaylight.ipsec.domain.IPsecRule;
-import org.opendaylight.ipsec.service.ConfigurationService;
 import org.opendaylight.ipsec.utils.RuleConflictException;
+import org.opendaylight.ipsec.utils.tcp.TCPClient;
+import org.opendaylight.ipsec.utils.tcp.TCPClientCallback;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.ipsec.rev150105.*;
 import org.opendaylight.yangtools.yang.common.RpcError;
 import org.opendaylight.yangtools.yang.common.RpcResult;
@@ -207,6 +208,52 @@ public class IPsecImpl implements IPsecService {
     }
 
     @Override
+    public Future<RpcResult<IssueConfigOutput>> issueConfig(IssueConfigInput input) {
+        int position = input.getPosition();
+        IPsecRule rule = IPsecRuleBuffer.get(position);
+        String srcIP = rule.getSource();
+        String desIP = rule.getDestination();
+
+        String ipsecConf = "# /etc/ipsec.conf - strongSwan IPsec configuration file\n" +
+                "\n" +
+                "config setup\n" +
+                "\n" +
+                "conn %default\n" +
+                "\tikelifetime=60m\n" +
+                "\tkeylife=20m\n" +
+                "\trekeymargin=3m\n" +
+                "\tkeyingtries=1\n" +
+                "\tauthby=secret\n" +
+                "\tkeyexchange=ikev2\n" +
+                "\tmobike=no\n" +
+                "\n" +
+                "conn net-net\n" +
+                "\tleft=192.168.0.1\n" +
+                "\tleftsubnet=" + srcIP + "/24\n" +
+                "\tleftid=@moon.strongswan.org\n" +
+                "\tleftfirewall=yes\n" +
+                "\tright=192.168.0.2\n" +
+                "\trightsubnet=" + desIP + "/24\n" +
+                "\trightid=@sun.strongswan.org\n" +
+                "\tauto=add\n";
+
+        TCPClient client = new TCPClient("192.168.90.130", 2020);
+        client.send(ipsecConf.getBytes(), new TCPClientCallback() {
+            @Override
+            public void deal(String address, byte[] response) {
+                System.out.println(new String(response));
+            }
+        });
+
+        IssueConfigOutputBuilder builder = new IssueConfigOutputBuilder();
+        //TODO: return result
+        builder.setResult(client.getResult());
+        RpcResult<IssueConfigOutput> rpcResult =
+                Rpcs.<IssueConfigOutput>getRpcResult(true, builder.build(), Collections.<RpcError>emptySet());
+        return Futures.immediateFuture(rpcResult);
+    }
+
+    @Override
     public Future<RpcResult<RuleDelOutput>> ruleDel(RuleDelInput input) {
 
         int position = input.getPosition();
@@ -218,13 +265,6 @@ public class IPsecImpl implements IPsecService {
                 while (iterator.hasNext()) {
                     IPsecRule ir = iterator.next();
                     if (ir == rule) {
-                        // down the connection
-                        try {
-                            ConfigurationService.issueConfiguration(
-                                    InetAddress.getByName(ig.getPrivateip()), rule);
-                        } catch (UnknownHostException e) {
-                            // impossible
-                        }
                         // remove the rule from gateway
                         iterator.remove();
                     }

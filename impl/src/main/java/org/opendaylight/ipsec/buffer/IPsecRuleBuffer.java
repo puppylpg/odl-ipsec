@@ -10,7 +10,6 @@ package org.opendaylight.ipsec.buffer;
 import org.opendaylight.ipsec.domain.IPsecConnection;
 import org.opendaylight.ipsec.domain.IPsecGateway;
 import org.opendaylight.ipsec.domain.IPsecRule;
-import org.opendaylight.ipsec.service.ConfigurationService;
 import org.opendaylight.ipsec.utils.RuleConflictException;
 
 import java.net.InetAddress;
@@ -240,28 +239,28 @@ public class IPsecRuleBuffer {
      * check all gateways for unhundled packets
      */
     private static void checkAllGateways(IPsecRule rule) {
-        for (IPsecGateway ig : IPsecGatewayBuffer.getGateways()) {
-            // for each gateways
-            IPsecRule tmpRule;
-            Iterator<IPsecRule> unHundled = ig.UnHundledPackets().iterator();
-            while (unHundled.hasNext()) {
-                // for each unhundled packets
-                tmpRule = unHundled.next();
-                if (rule.match(tmpRule.source(), tmpRule.destination())) {
-                    // if matches, issue the rule
-                    try {
-                        ConfigurationService.issueConfiguration(InetAddress.getByName(ig.getPrivateip()), rule);
-                        // add the rule to gateway buffer
-                        ig.addIssuedRules(rule);
-                        // remove the packet
-//                        ig.UnHundledPackets().remove(unHundled);
-                        unHundled.remove();
-                    } catch (UnknownHostException e) {
-                        // impossible
-                    }
-                }
-            }
-        }
+//        for (IPsecGateway ig : IPsecGatewayBuffer.getGateways()) {
+//            // for each gateways
+//            IPsecRule tmpRule;
+//            Iterator<IPsecRule> unHundled = ig.UnHundledPackets().iterator();
+//            while (unHundled.hasNext()) {
+//                // for each unhundled packets
+//                tmpRule = unHundled.next();
+//                if (rule.match(tmpRule.source(), tmpRule.destination())) {
+//                    // if matches, issue the rule
+//                    try {
+//                        ConfigurationService.issueConfiguration(InetAddress.getByName(ig.getPrivateip()), rule);
+//                        // add the rule to gateway buffer
+//                        ig.addIssuedRules(rule);
+//                        // remove the packet
+////                        ig.UnHundledPackets().remove(unHundled);
+//                        unHundled.remove();
+//                    } catch (UnknownHostException e) {
+//                        // impossible
+//                    }
+//                }
+//            }
+//        }
     }
 
     public static IPsecRule get(int position) {

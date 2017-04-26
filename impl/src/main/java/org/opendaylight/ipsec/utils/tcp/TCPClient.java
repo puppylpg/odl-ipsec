@@ -12,20 +12,19 @@ import org.opendaylight.ipsec.utils.ByteTools;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class TCPClient {
-    private InetAddress address;
+    private String address;
     private int port;
+    private String result;
 
     /**
      * Build tcp client.
      * @param address ip address of service
      * @param port port of service
      */
-    public TCPClient(InetAddress address, int port) {
+    public TCPClient(String address, int port) {
         this.address = address;
         this.port = port;
     }
@@ -39,13 +38,21 @@ public class TCPClient {
         new SendThread(address, port, request, callback).start();
     }
 
+    private void setResult(String result) {
+        this.result = result;
+    }
+
+    public String getResult() {
+        return this.result;
+    }
+
     class SendThread extends Thread {
-        private InetAddress address;
+        private String address;
         private int port;
         private byte[] request;
         private TCPClientCallback callback;
 
-        public SendThread(InetAddress address, int port, byte[] request, TCPClientCallback callback) {
+        public SendThread(String address, int port, byte[] request, TCPClientCallback callback) {
             this.address = address;
             this.port = port;
             this.request = request;
@@ -56,6 +63,7 @@ public class TCPClient {
             Socket socket = null;
             try {
                 socket = new Socket(address, port);
+                System.out.println("connect to server: success!");
                 // send request bytes
                 OutputStream outputStream = socket.getOutputStream();
                 ByteTools.writeStream(outputStream, request);
@@ -63,10 +71,16 @@ public class TCPClient {
                 // get response bytes
                 InputStream inputStream = socket.getInputStream();
                 byte[] response = ByteTools.readStream(inputStream);
+//                byte [] response = "hello, world!".getBytes();
                 inputStream.close();
                 outputStream.close();
                 // call the callback interface
                 callback.deal(address, response);
+
+                // result Returned by server
+                setResult(new String(response));
+                System.out.println(result);
+
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -82,16 +96,12 @@ public class TCPClient {
     }
 
     public static void main(String[] args) {
-        try {
-            TCPClient client = new TCPClient(InetAddress.getByName("127.0.0.1"), 1919);
-            client.send("foo\nbar".getBytes(), new TCPClientCallback() {
-                @Override
-                public void deal(InetAddress address, byte[] response) {
-                    System.out.println(new String(response));
-                }
-            });
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        TCPClient client = new TCPClient("192.168.90.130", 2020);
+        client.send("Hello, World!".getBytes(), new TCPClientCallback() {
+            @Override
+            public void deal(String address, byte[] response) {
+//                System.out.println(new String(response));
+            }
+        });
     }
 }
