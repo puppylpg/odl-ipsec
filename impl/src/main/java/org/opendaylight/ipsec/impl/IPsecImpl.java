@@ -246,8 +246,7 @@ public class IPsecImpl implements IPsecService {
         });
 
         IssueConfigOutputBuilder builder = new IssueConfigOutputBuilder();
-        //TODO: return result
-        builder.setResult(client.getResult());
+        builder.setResult("配置文件下发成功:\n" + ipsecConf);
         RpcResult<IssueConfigOutput> rpcResult =
                 Rpcs.<IssueConfigOutput>getRpcResult(true, builder.build(), Collections.<RpcError>emptySet());
         return Futures.immediateFuture(rpcResult);

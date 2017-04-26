@@ -17,7 +17,6 @@ import java.net.Socket;
 public class TCPClient {
     private String address;
     private int port;
-    private String result;
 
     /**
      * Build tcp client.
@@ -36,14 +35,6 @@ public class TCPClient {
      */
     public void send(byte[] request, TCPClientCallback callback) {
         new SendThread(address, port, request, callback).start();
-    }
-
-    private void setResult(String result) {
-        this.result = result;
-    }
-
-    public String getResult() {
-        return this.result;
     }
 
     class SendThread extends Thread {
@@ -76,11 +67,6 @@ public class TCPClient {
                 outputStream.close();
                 // call the callback interface
                 callback.deal(address, response);
-
-                // result Returned by server
-                setResult(new String(response));
-                System.out.println(result);
-
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
