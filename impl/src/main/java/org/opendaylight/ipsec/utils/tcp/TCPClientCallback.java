@@ -16,5 +16,5 @@ public interface TCPClientCallback {
      * @param address remote address
      * @param response remote response
      */
-    public void deal(InetAddress address, byte[] response);
+    public void deal(String address, byte[] response);
 }

@@ -161,6 +161,19 @@ module IPsec {
         }
     }
 
+    rpc issueConfig {
+        input {
+            leaf position {
+                type int32;
+            }
+        }
+        output {
+            leaf result {
+                type string;
+            }
+        }
+    }
+
     rpc rule-del {
         input {
             leaf position {
